@@ -5,6 +5,7 @@ import com.adv.userservice.dto.UserRegistrationDTO;
 import com.adv.userservice.dto.UserResponseDTO;
 import com.adv.userservice.model.User;
 import com.adv.userservice.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
+    @Operation(description = "Login into the application")
     public ResponseEntity<UserResponseDTO> loginUser(@RequestBody UserLoginDTO loginDto) throws Exception {
         UserResponseDTO user = userService.login(loginDto);
         return ResponseEntity.status(HttpStatus.OK).body(user) ;
