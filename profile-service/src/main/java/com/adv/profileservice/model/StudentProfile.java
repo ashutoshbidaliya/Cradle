@@ -1,5 +1,4 @@
-package com.adv.profileservice;
-
+package com.adv.profileservice.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

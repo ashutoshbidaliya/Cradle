@@ -3,22 +3,37 @@ package com.adv.userservice.service;
 import com.adv.userservice.dto.UserLoginDTO;
 import com.adv.userservice.dto.UserRegistrationDTO;
 import com.adv.userservice.dto.UserResponseDTO;
+import com.adv.userservice.event.UserCreatedEvent;
 import com.adv.userservice.model.User;
 import com.adv.userservice.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class UserService {
-    @Autowired
-    private UserRepository repository;
+
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class); // Logger
+
+    private final UserRepository repository;
+    private final PasswordEncoder passwordEncoder;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    public static final String USER_CREATED_TOPIC = "user-created-topic";
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    public UserService(UserRepository repository, PasswordEncoder passwordEncoder, KafkaTemplate<String, Object> kafkaTemplate) {
+        this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
     public Optional<List<User>> getUserByName(String firstName) {
         return repository.findByFirstName(firstName);
@@ -42,6 +57,7 @@ public class UserService {
 
     }*/
 
+    @Transactional
     public User createUser(UserRegistrationDTO userDto) {
 
         User user = User.builder()
@@ -51,7 +67,24 @@ public class UserService {
                 .password(passwordEncoder.encode(userDto.getPassword()))
                 .build();
 
-        return repository.save(user);
+        User savedUser =  repository.save(user);
+        logger.info("User created with ID: {}", savedUser.getUserId());
+
+        // Trigger profile creation for STUDENT role
+        if(savedUser.getRole() == User.Role.STUDENT) {
+            UserCreatedEvent event = new UserCreatedEvent(savedUser.getUserId(),
+                    savedUser.getRole().name(),
+                    savedUser.getEmail());
+            try {
+                kafkaTemplate.send(USER_CREATED_TOPIC, savedUser.getUserId().toString(), event);
+
+                logger.info("Sent UserCreatedEvent for user ID: {} to topic: {}", savedUser.getUserId(), USER_CREATED_TOPIC);
+
+            } catch (Exception e) {
+                logger.error("Error sending UserCreateEvent for user id: {} ", savedUser.getUserId(), e);
+            }
+        }
+        return savedUser;
     }
 
     public UserResponseDTO login(UserLoginDTO loginDto) throws Exception {
