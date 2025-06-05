@@ -5,13 +5,13 @@ spring:
     gateway:
       routes:
         - id: discovery-server
-          uri: http://localhost:8761/eureka/
+          uri: http://discovery-server:8761
           predicates:
             - Path=/eureka/web
           filters:
             - SetPath=/
         - id: user-service
-          uri: lb://USER-SERVICE:8081
+          uri: lb://USER-SERVICE
           predicates:
             - Path=/api/v1/users/**
 #        - id: profile-service
@@ -37,7 +37,8 @@ logging:
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://discovery-server:8761/eureka/
     fetch-registry: true
+    register-with-eureka: true
 app:
-  eureka-server: localhost
+  eureka-server: discovery-server
