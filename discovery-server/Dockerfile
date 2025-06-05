@@ -18,10 +18,10 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copy only the built jar from the builder stage
-COPY --from=builder /app/api-gateway/target/*.jar app.jar
+COPY --from=builder /app/discovery-server/target/*.jar app.jar
 
 # Expose port
-EXPOSE 8081
+EXPOSE 8761
 
 # Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]

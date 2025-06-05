@@ -21,11 +21,13 @@ public class KafkaProducerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    public NewTopic topic() {
-        return TopicBuilder.name("user-created-topic")
-                .partitions(3)
+    public static final String USER_CREATED_TOPIC = "user-created-topic";
+
+    @Bean
+    public NewTopic userCreatedTopic() {
+        return TopicBuilder.name(USER_CREATED_TOPIC)
+                .partitions(1)
                 .replicas(1)
-                .compact()
                 .build();
     }
 

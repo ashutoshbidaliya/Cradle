@@ -1,0 +1,45 @@
+
+services:
+  discovery-server:
+    build:
+      context: ./    # points to Cradle root folder where pom.xml is
+      dockerfile: discovery-server/Dockerfile
+    ports:
+      - "8761:8761"
+    networks:
+      - cradle-net
+
+  api-gateway:
+    build:
+      context: ./
+      dockerfile: api-gateway/Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - discovery-server
+    networks:
+      - cradle-net
+
+#  user-service:
+#    build:
+#      context: ./user-service
+#    ports:
+#      - "8082:8082"
+#    depends_on:
+#      - discovery-server
+#    networks:
+#      - cradle-net
+#
+#  profile-service:
+#    build:
+#      context: ./profile-service
+#    ports:
+#      - "8083:8083"
+#    depends_on:
+#      - discovery-server
+#    networks:
+#      - cradle-net
+
+networks:
+  cradle-net:
+    driver: bridge
