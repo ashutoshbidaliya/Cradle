@@ -9,10 +9,10 @@ WORKDIR /app
 COPY . .
 
 # Package the application (skip tests for faster build)
-RUN mvn clean package -DskipTests
+RUN mvn -pl api-gateway -am clean package -DskipTests
 
 # Stage 2: Create the runtime image
-FROM openjdk:21-jdk-slim
+FROM gcr.io/distroless/java21-debian12
 
 # Set working directory
 WORKDIR /app
