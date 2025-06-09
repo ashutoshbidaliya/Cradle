@@ -40,6 +40,7 @@ public class KafkaProducerConfig {
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
+    @Bean
     public KafkaTemplate<String, UserCreatedEvent> userCreatedEventKafkaTemplate() {
         return new KafkaTemplate<>(userCreatedEventProducerFactory());
     }

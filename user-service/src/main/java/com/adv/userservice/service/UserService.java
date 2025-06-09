@@ -24,12 +24,12 @@ public class UserService {
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, UserCreatedEvent> kafkaTemplate;
 
     public static final String USER_CREATED_TOPIC = "user-created-topic";
 
     @Autowired
-    public UserService(UserRepository repository, PasswordEncoder passwordEncoder, KafkaTemplate<String, Object> kafkaTemplate) {
+    public UserService(UserRepository repository, PasswordEncoder passwordEncoder, KafkaTemplate<String, UserCreatedEvent> kafkaTemplate) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.kafkaTemplate = kafkaTemplate;

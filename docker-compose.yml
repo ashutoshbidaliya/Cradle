@@ -25,27 +25,54 @@ services:
         condition: service_healthy
     networks:
       - cradle-net
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"       # External Kafka port
+      - "9094:9094"       # Internal broker port (KRaft)
+    environment:
+      # KRaft mode configuration
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9094
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CFG_LOG_DIRS: /bitnami/kafka/data
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - kafka_data:/bitnami/kafka
+    networks:
+      - cradle-net
 
-#  user-service:
-#    build:
-#      context: ./user-service
-#    ports:
-#      - "8082:8082"
-#    depends_on:
-#      - discovery-server
-#    networks:
-#      - cradle-net
-#
-#  profile-service:
-#    build:
-#      context: ./profile-service
-#    ports:
-#      - "8083:8083"
-#    depends_on:
-#      - discovery-server
-#    networks:
-#      - cradle-net
+  user-service:
+    build:
+      context: ./user-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - discovery-server
+      - kafka
+    networks:
+      - cradle-net
+
+  profile-service:
+    build:
+      context: ./profile-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - discovery-server
+    networks:
+      - cradle-net
+
 
 networks:
   cradle-net:
     driver: bridge
+
+volumes:
+  kafka_data:
