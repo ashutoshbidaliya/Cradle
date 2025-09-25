@@ -1,14 +1,17 @@
 package com.adv.userservice.service;
 
+import com.adv.userservice.dto.UserCacheDTO;
 import com.adv.userservice.dto.UserLoginDTO;
 import com.adv.userservice.dto.UserRegistrationDTO;
 import com.adv.userservice.dto.UserResponseDTO;
 import com.adv.userservice.event.UserCreatedEvent;
 import com.adv.userservice.model.User;
 import com.adv.userservice.repository.UserRepository;
+import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -46,6 +49,22 @@ public class UserService {
     public Optional<User> getUserById(Long userId) {
         return repository.findById(userId);
     }
+
+    //Todo: Add caching to the user APIs
+   /* @Cacheable(value = "users", key = "#userId", condition = "#userId != null", unless = "#result == null")
+    public Optional<UserCacheDTO> getUserById(Long userId) {
+        logger.info("DATABASE HIT: Fetching user with ID {} from database.", userId);
+        Optional<User> userOpt = repository.findById(userId);
+
+        if (userOpt.isPresent()) {
+            UserCacheDTO userCacheDTO = mapUserToCacheDto(userOpt.get());
+            logger.info("Returning UserCacheDTO for user ID: {}", userId);
+            return Optional.of(userCacheDTO);
+        } else {
+            logger.info("User with ID {} not found", userId);
+            return Optional.empty();
+        }
+    }*/
 
    /* public List<Long> deleteUsers(String email) {
         List<User> users = repository.findAllByEmail(email);
@@ -90,17 +109,37 @@ public class UserService {
 
     public UserResponseDTO login(UserLoginDTO loginDto) throws Exception {
         User user = repository.findByEmail(loginDto.getEmail())
-                .orElseThrow(() -> new Exception("Invalid email id"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid email id :{}"+ loginDto.getEmail()));
         if (!passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
+            logger.error("Incorrect password for user id: {}",user.getUserId());
            throw  new Exception("Invalid  password");
         }
 
         return UserResponseDTO.builder()
+                .id(user.getUserId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .role(user.getRole().name())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
                 .build();
+    } 
+    //, {
+    //          state: { id, firstName, userEmail },
+    //        }
+
+    private UserCacheDTO mapUserToCacheDto(User user) {
+        // Instead of using the builder, you now use the record's constructor.
+        return new UserCacheDTO(
+                user.getUserId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getRole().name(), // Convert enum to String
+                user.getCreatedAt(),
+                user.getUpdatedAt()
+        );
     }
 
 }

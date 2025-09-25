@@ -25,6 +25,12 @@ services:
         condition: service_healthy
     networks:
       - cradle-net
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
   kafka:
     image: bitnami/kafka:latest
     container_name: kafka
